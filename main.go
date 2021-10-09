@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -24,14 +23,14 @@ var path string = "data\\quotes.txt"
 var currentAuthor string
 var currentQuoute string
 
-func init() {
-	flag.StringVar(&Token, "t", "", "Bot token")
-	flag.Parse()
-}
+// func init() {
+// 	flag.StringVar(&Token, "t", "", "Bot token")
+// 	flag.Parse()
+// }
 
 func main() {
 	quotes = ParseFile(path)
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + "ODk1ODAyNDgzMTE1NDU0NDY0.YV93Ew.M-yOKKwLAAh357ohQPps-U2sSUQ")
 	if err != nil {
 		log.Fatalf("Error creating Discord session %v", err)
 	}
