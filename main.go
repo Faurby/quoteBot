@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	Token string
+	Token         string
+	quotes        map[string]string
+	path          string = "data\\quotes.txt"
+	currentAuthor string
+	currentQuoute string
+	userRank      map[discordgo.User]int
 )
-
-var quotes map[string]string
-var path string = "data\\quotes.txt"
-var currentAuthor string
-var currentQuoute string
 
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot token")
@@ -31,6 +31,8 @@ func init() {
 
 func main() {
 	quotes = ParseFile(path)
+	userRank = make(map[discordgo.User]int)
+
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		log.Fatalf("Error creating Discord session %v", err)
@@ -68,10 +70,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			sendChannelMessage(s, m, "You have to guess, dummy!")
 		} else {
 
-			guess := m.Content[13:len(m.Content)]
+			guess := strings.TrimSpace(m.Content[13:len(m.Content)])
 
 			if strings.EqualFold(guess, currentAuthor) {
 				output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
+				GiveUserPoint(m.Author)
 
 				sendChannelMessage(s, m, output)
 			} else {
@@ -92,10 +95,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"!tue send : Sends \"Yo, fuck Tue!\" to Tue in a private dm", m.Author.Username)
 
 		sendChannelMessage(s, m, output)
-	} else if strings.HasPrefix(m.Content, "!quote ") {
-		authorToSearchQuotesFor := m.Content[7:len(m.Content)]
-
-		sendChannelMessage(s, m, GetAllQuotesFromAuthor(authorToSearchQuotesFor))
+	} else if m.Content == "!quote rank" {
+		sendChannelMessage(s, m, DisplayRanks(s, m))
 	} else if m.Content == "!tue" {
 		sendChannelMessage(s, m, "Yo, fuck Tue!")
 	} else if m.Content == "!tue send" {
@@ -109,6 +110,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendChannelMessage(s, m, "Yo fuck Tue!")
 	} else if m.Content == "!nød" {
 		sendChannelMessage(s, m, ":weary:")
+	} else if strings.HasPrefix(m.Content, "!quote ") {
+		authorToSearchQuotesFor := strings.TrimSpace(m.Content[7:len(m.Content)])
+
+		sendChannelMessage(s, m, GetAllQuotesFromAuthor(authorToSearchQuotesFor))
 	}
 }
 
@@ -116,6 +121,28 @@ func sendChannelMessage(s *discordgo.Session, m *discordgo.MessageCreate, output
 	_, err := s.ChannelMessageSend(m.ChannelID, output)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func GiveUserPoint(author *discordgo.User) {
+	if _, ok := userRank[*author]; ok {
+		userRank[*author]++
+	} else {
+		userRank[*author] = 1
+	}
+}
+
+func DisplayRanks(s *discordgo.Session, m *discordgo.MessageCreate) string {
+	var ranks strings.Builder
+	ranks.WriteString("--- Quote rankings! ---\n")
+	for key, value := range userRank {
+		ranks.WriteString(fmt.Sprintf("%s = %d\n", key.Username, value))
+	}
+
+	if ranks.Len() == 1 {
+		return "Doesnt seem like there are any users with points :c"
+	} else {
+		return ranks.String()
 	}
 }
 
