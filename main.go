@@ -20,7 +20,9 @@ var (
 )
 
 var quotes map[string]string
-var path string = "data\\quote.txt"
+var path string = "data\\quotes.txt"
+var currentAuthor string
+var currentQuoute string
 
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot token")
@@ -48,8 +50,6 @@ func main() {
 	<-sc
 
 	dg.Close()
-
-	GuessRandomQuote()
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -59,12 +59,35 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content == "!quote" {
-		FindRandomQuote()
+		currentQuoute, currentAuthor = FindRandomQuote()
+		_, err := s.ChannelMessageSend(m.ChannelID, currentQuoute)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if strings.Contains(m.Content, "!quote guess") {
+		words := strings.Fields(m.Content)
+		guess := words[len(words)-1]
+
+		if strings.EqualFold(guess, currentAuthor) {
+			output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
+
+			_, err := s.ChannelMessageSend(m.ChannelID, output)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			output := fmt.Sprintf("I'm sorry, %s is not the correct person :(", guess)
+
+			_, err := s.ChannelMessageSend(m.ChannelID, output)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }
 
 func ParseFile(path string) map[string]string {
-	f, err := os.Open("data\\quote.txt")
+	f, err := os.Open("data\\quotes.txt")
 	if err != nil {
 		log.Fatalf("Error in opening file: %v", err)
 	}
