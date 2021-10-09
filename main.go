@@ -60,29 +60,62 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "!quote" {
 		currentQuoute, currentAuthor = FindRandomQuote()
-		_, err := s.ChannelMessageSend(m.ChannelID, currentQuoute)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if strings.Contains(m.Content, "!quote guess") {
-		words := strings.Fields(m.Content)
-		guess := words[len(words)-1]
+		output := fmt.Sprintf("--- Guess the quote! ---  \n%s", currentQuoute)
+		sendChannelMessage(s, m, output)
 
-		if strings.EqualFold(guess, currentAuthor) {
-			output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
-
-			_, err := s.ChannelMessageSend(m.ChannelID, output)
-			if err != nil {
-				log.Fatal(err)
-			}
+	} else if strings.HasPrefix(m.Content, "!quote guess") {
+		if m.Content == "!quote guess" {
+			sendChannelMessage(s, m, "You have to guess, dummy!")
 		} else {
-			output := fmt.Sprintf("I'm sorry, %s is not the correct person :(", guess)
 
-			_, err := s.ChannelMessageSend(m.ChannelID, output)
-			if err != nil {
-				log.Fatal(err)
+			guess := m.Content[13:len(m.Content)]
+
+			if strings.EqualFold(guess, currentAuthor) {
+				output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
+
+				sendChannelMessage(s, m, output)
+			} else {
+				output := fmt.Sprintf("I'm sorry, %s is not the correct person :(", guess)
+
+				sendChannelMessage(s, m, output)
 			}
 		}
+	} else if m.Content == "!quote all" {
+		sendChannelMessage(s, m, GetAllQuotes())
+	} else if m.Content == "!quote help" {
+		output := fmt.Sprintf("Hello %s and welcome to Gøgler bot!\n\n"+
+			"The following commands are supported at the moment:\n"+
+			"!quote : Returns a random quote\n"+
+			"!quote guess <name> : A guess to the last random quote\n"+
+			"!quote all : Returns all quotes (but without the authors, otherwise that would be cheating!)\n"+
+			"!tue : Returns \"Yo, fuck Tue!\"\n"+
+			"!tue send : Sends \"Yo, fuck Tue!\" to Tue in a private dm", m.Author.Username)
+
+		sendChannelMessage(s, m, output)
+	} else if strings.HasPrefix(m.Content, "!quote ") {
+		authorToSearchQuotesFor := m.Content[7:len(m.Content)]
+
+		sendChannelMessage(s, m, GetAllQuotesFromAuthor(authorToSearchQuotesFor))
+	} else if m.Content == "!tue" {
+		sendChannelMessage(s, m, "Yo, fuck Tue!")
+	} else if m.Content == "!tue send" {
+		a, err := s.UserChannelCreate("245253768021540864")
+		if err != nil {
+			fmt.Printf("Error in sending to user: %v", err)
+		}
+		s.ChannelMessageSend(a.ID, "Yo, fuck Tue!")
+		sendChannelMessage(s, m, "Successfully sent message to Tue")
+	} else if m.Content == "!lasse" {
+		sendChannelMessage(s, m, "Yo fuck Tue!")
+	} else if m.Content == "!nød" {
+		sendChannelMessage(s, m, ":weary:")
+	}
+}
+
+func sendChannelMessage(s *discordgo.Session, m *discordgo.MessageCreate, output string) {
+	_, err := s.ChannelMessageSend(m.ChannelID, output)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -109,9 +142,36 @@ func ParseFile(path string) map[string]string {
 	return quouteToAuthor
 }
 
-func PrintAllQuotes() {
+func GetAllQuotes() string {
+	var allQuotes strings.Builder
+	for key := range quotes {
+		allQuotes.WriteString(fmt.Sprintf("\"%s \"\n", key))
+	}
+	return allQuotes.String()
+}
+
+func GetAllQuotesAndAuthors() string {
+	var allQuotes strings.Builder
 	for key, value := range quotes {
-		fmt.Printf("\"%s \" ~%s \n", key, value)
+		allQuotes.WriteString(fmt.Sprintf("\"%s \" -%s \n", key, value))
+	}
+	return allQuotes.String()
+}
+
+func GetAllQuotesFromAuthor(author string) string {
+	var allQuotes strings.Builder
+	allQuotes.WriteString(fmt.Sprintf("%s has said all of these quotes:\n", strings.Title(author)))
+
+	for key, value := range quotes {
+		if strings.EqualFold(value, author) {
+			allQuotes.WriteString(fmt.Sprintf("\"%s \"\n", key))
+		}
+	}
+
+	if allQuotes.Len() == 1 {
+		return fmt.Sprintf("Hmm, doesn't look like %s has any quotes :(", author)
+	} else {
+		return allQuotes.String()
 	}
 }
 
@@ -126,25 +186,4 @@ func FindRandomQuote() (string, string) {
 	randomNumber := rand.Intn((len(list) - 1) + 1)
 
 	return fmt.Sprintf("\"%s\"", list[randomNumber]), quotes[list[randomNumber]]
-}
-
-func GuessRandomQuote() {
-	quote, author := FindRandomQuote()
-
-	fmt.Println("----- Gæt et quote! -----")
-	fmt.Println(quote)
-
-	buf := bufio.NewReader(os.Stdin)
-	fmt.Print("> ")
-	sentence, err := buf.ReadBytes('\n')
-	result := strings.TrimSpace(string(sentence))
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		if strings.EqualFold(result, author) {
-			fmt.Println("Tillykke, du gættede korrekt!")
-		} else {
-			fmt.Print("Forkert gæt :(")
-		}
-	}
 }
