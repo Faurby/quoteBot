@@ -55,6 +55,11 @@ func main() {
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	rand.Seed(time.Now().UnixNano())
+	number := rand.Intn((25 - 1) + 1)
+	if number == 1 {
+		sendChannelMessage(s, m, "Det var rimeligt mærkeligt sagt")
+	}
 
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -75,6 +80,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if strings.EqualFold(guess, currentAuthor) {
 				output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
 				GiveUserPoint(m.Author)
+				currentAuthor = ""
+				currentQuoute = ""
 
 				sendChannelMessage(s, m, output)
 			} else {
