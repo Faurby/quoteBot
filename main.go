@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	Token         string
+	token         string
 	quotes        map[string]string
 	path          string = "data\\quotes.txt"
 	currentAuthor string
@@ -25,7 +25,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&Token, "t", "", "Bot token")
+	flag.StringVar(&token, "t", "", "Bot token")
 	flag.Parse()
 }
 
@@ -33,7 +33,7 @@ func main() {
 	quotes = ParseFile(path)
 	userRank = make(map[discordgo.User]int)
 
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Fatalf("Error creating Discord session %v", err)
 	}
@@ -75,7 +75,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			sendChannelMessage(s, m, "You have to guess, dummy!")
 		} else {
 
-			guess := strings.TrimSpace(m.Content[13:len(m.Content)])
+			guess := strings.Title(strings.TrimSpace(m.Content[13:len(m.Content)]))
 
 			if strings.EqualFold(guess, currentAuthor) {
 				output := fmt.Sprintf("Congratulations, %s is the correct person! :)", currentAuthor)
@@ -121,6 +121,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		authorToSearchQuotesFor := strings.TrimSpace(m.Content[7:len(m.Content)])
 
 		sendChannelMessage(s, m, GetAllQuotesFromAuthor(authorToSearchQuotesFor))
+	} else if strings.Contains(strings.ToLower(m.Content), "tue") {
+		sendChannelMessage(s, m, "Yo, fuck Tue!")
 	}
 }
 
@@ -217,7 +219,8 @@ func FindRandomQuote() (string, string) {
 		list = append(list, key)
 	}
 
-	randomNumber := rand.Intn((len(list) - 1) + 1)
+	randomNumber := rand.Intn((len(list) - 0) + 1)
 
+	// Returns quote and author tuple
 	return fmt.Sprintf("\"%s\"", list[randomNumber]), quotes[list[randomNumber]]
 }
