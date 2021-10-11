@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -18,10 +19,10 @@ import (
 var (
 	token         string
 	quotes        map[string]string
-	path          string = "data\\quotes.txt"
+	path          string = filepath.Join("data", "quotes.txt")
 	currentAuthor string
 	currentQuoute string
-	userRank      map[discordgo.User]int
+	userRank      = make(map[discordgo.User]int)
 )
 
 func init() {
@@ -31,7 +32,6 @@ func init() {
 
 func main() {
 	quotes = ParseFile(path)
-	userRank = make(map[discordgo.User]int)
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -156,7 +156,7 @@ func DisplayRanks(s *discordgo.Session, m *discordgo.MessageCreate) string {
 }
 
 func ParseFile(path string) map[string]string {
-	f, err := os.Open("data\\quotes.txt")
+	f, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("Error in opening file: %v", err)
 	}
