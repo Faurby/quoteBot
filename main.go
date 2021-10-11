@@ -221,7 +221,7 @@ func FindRandomQuote() (string, string) {
 		list = append(list, key)
 	}
 
-	randomNumber := rand.Intn((len(list) - 0) + 1)
+	randomNumber := rand.Intn((len(list)))
 
 	// Returns quote and author tuple
 	return fmt.Sprintf("\"%s\"", list[randomNumber]), quotes[list[randomNumber]]
