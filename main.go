@@ -123,6 +123,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendChannelMessage(s, m, GetAllQuotesFromAuthor(authorToSearchQuotesFor))
 	} else if strings.Contains(strings.ToLower(m.Content), "tue") {
 		sendChannelMessage(s, m, "Yo, fuck Tue!")
+	} else if m.Author.ID == "245253768021540864" {
+		sendChannelMessage(s, m, "Stærk sagt b")
 	}
 }
 
