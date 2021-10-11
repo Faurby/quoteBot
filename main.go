@@ -64,6 +64,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	var k, _ = s.Channel(m.ChannelID)
+	if k.Name == "general" {
+		return
+	}
 
 	if m.Content == "!quote" {
 		currentQuoute, currentAuthor = FindRandomQuote()
