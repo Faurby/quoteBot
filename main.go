@@ -69,6 +69,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if m.Content == "!quote admin kill" {
+		if m.Author.ID == "149233281349451777" {
+			os.Exit(69)
+		}
+	}
+
 	if m.Content == "!quote" {
 		currentQuoute, currentAuthor = FindRandomQuote()
 		output := fmt.Sprintf("--- Guess the quote! ---  \n%s", currentQuoute)
@@ -129,10 +135,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendChannelMessage(s, m, "Yo, fuck Tue!")
 	} else if m.Author.ID == "245253768021540864" {
 		sendChannelMessage(s, m, "Stærk sagt b")
-	} else if m.Content == "!quote admin kill" {
-		if m.Author.ID == "149233281349451777" {
-			os.Exit(69)
-		}
 	}
 }
 
